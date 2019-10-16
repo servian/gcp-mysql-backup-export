@@ -1,3 +1,5 @@
+// based from code found in the article at
+// https://medium.com/@kennethteh90/how-to-schedule-daily-cloud-sql-export-to-google-cloud-storage-4c1bd360af06
 const { google } = require('googleapis');
 const { auth } = require('google-auth-library');
 var sqladmin = google.sqladmin("v1beta4");
