@@ -19,10 +19,14 @@ exports.exportDatabase = (req, res) => {
         console.log('project_name is:' + parsedBody.project_name);
         console.log('mysql_instance_name is:' + parsedBody.mysql_instance_name);
         console.log('bucket_name is:' + parsedBody.bucket_name);
+        console.log('subdirectory is:' + parsedBody.subdirectory);
 
         const authRes = await auth.getApplicationDefault();
         var utc = new Date().toJSON().replace(/-/g, '_').replace(/:/g, '_');
         let authClient = authRes.credential;
+        var d = new Date();
+        var month = d.toLocaleString('en-GB', { month: 'long' });
+        var year = d.getFullYear();
         var request = {
             // Project ID of the project that contains the instance to be exported.
             project: parsedBody.project_name,
@@ -36,13 +40,13 @@ exports.exportDatabase = (req, res) => {
                     kind: "sql#exportContext",
                     // The file type for the specified uri (e.g. SQL or CSV)
                     fileType: "SQL", // CSV
-                    /** 
+                    /**
                      * The path to the file in GCS where the export will be stored.
                      * The URI is in the form gs://bucketName/fileName.
                      * If the file already exists, the operation fails.
                      * If fileType is SQL and the filename ends with .gz, the contents are compressed.
                      */
-                    uri: `gs://` + parsedBody.bucket_name + `/backups/backup-`.concat(utc).concat(`.gz`),
+                    uri: `gs://` + parsedBody.bucket_name + `/` + parsedBody.subdirectory + `/` + month + year + `/backup-`.concat(utc).concat(`.gz`),
 
                     /**
                      * Databases from which the export is made.
@@ -55,7 +59,7 @@ exports.exportDatabase = (req, res) => {
                     // sqlExportOptions: {
                     //   /**
                     //    * Tables to export, or that were exported, from the specified database.
-                    //    * If you specify tables, specify one and only one database. 
+                    //    * If you specify tables, specify one and only one database.
                     //    */
                     //   tables: config.tables,
                     //   // Export only schemas?
@@ -68,12 +72,14 @@ exports.exportDatabase = (req, res) => {
         };
         // Kick off export with requested arguments.
         sqladmin.instances.export(request, function (err, result) {
+            return_code = 200;
             if (err) {
                 console.log(err);
+                return_code = 500;
             } else {
                 console.log(result);
             }
-            res.status(200).send("Command completed", err, result);
+            res.status(return_code).send("Command completed", err, result);
         });
     }
     initiateDatabaseExport();
